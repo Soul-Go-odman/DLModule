@@ -120,12 +120,28 @@ class SK(nn.Module):
         return fea_V
 
 
+###### ECANet:Efficient Channel Attention for Deep Convolutional Neural Networks ######
+class ECA(nn.Module):
+    def __init__(self, in_chs, ksize=3):
+        super().__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.conv = nn.Conv1d(1, 1, kernel_size=ksize, padding=(ksize - 1) // 2, bias=False)
+        
+    def forward(self, x):
+        b, c, h, w = x.size()
+        y = self.avg_pool(x)
+        y = self.conv(y.squeeze(-1).transpose(-1, -2)).transpose(-1, -2).unsqueeze(-1)
+        y = torch.sigmoid(y)
+        # y = y.expand_as(x)
+        return x * y
+
 if __name__ == '__main__':
     
     inputData = torch.randn([2, 64, 32, 32])
     print(f"Input Data Shape is {inputData.shape}")
     
     # model = SE(in_chs=64, reduction=16, mode='conv')
-    model = SK(in_chs=64, M=3, r=2, group=16)
+    # model = SK(in_chs=64, M=3, r=2, group=16)
+    model = ECA(in_chs=64, ksize=3)
     y = model(inputData)
     print(y.shape)
