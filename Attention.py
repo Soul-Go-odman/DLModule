@@ -125,7 +125,7 @@ class SK(nn.Module):
 class ECA(nn.Module):
     def __init__(self, in_chs, gamma=2, b=1, ksize=None):
         super().__init__()
-        self.ksize = np.abs((np.log2(in_chs) + b) // gamma)
+        self.ksize = np.abs((np.log2(in_chs) + b) // gamma)  # C = 2^(gamma*k-b)
         self.ksize = self.ksize if ksize is None else ksize
         self.ksize = self.ksize if self.ksize % 2 else self.ksize + 1
 
