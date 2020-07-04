@@ -1,8 +1,9 @@
+from pprint import pprint
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from pprint import pprint
 
 
 ###### SENet:Squeeze-and-Excitation Networks ######
@@ -122,13 +123,16 @@ class SK(nn.Module):
 
 ###### ECANet:Efficient Channel Attention for Deep Convolutional Neural Networks ######
 class ECA(nn.Module):
-    def __init__(self, in_chs, ksize=3):
+    def __init__(self, in_chs, gamma=2, b=1, ksize=None):
         super().__init__()
+        self.ksize = np.abs((np.log2(in_chs) + b) // gamma)
+        self.ksize = self.ksize if ksize is None else ksize
+        self.ksize = self.ksize if self.ksize % 2 else self.ksize + 1
+
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.conv = nn.Conv1d(1, 1, kernel_size=ksize, padding=(ksize - 1) // 2, bias=False)
+        self.conv = nn.Conv1d(1, 1, kernel_size=self.ksize, padding=(self.ksize - 1) // 2, bias=False)
         
     def forward(self, x):
-        b, c, h, w = x.size()
         y = self.avg_pool(x)
         y = self.conv(y.squeeze(-1).transpose(-1, -2)).transpose(-1, -2).unsqueeze(-1)
         y = torch.sigmoid(y)
@@ -142,6 +146,6 @@ if __name__ == '__main__':
     
     # model = SE(in_chs=64, reduction=16, mode='conv')
     # model = SK(in_chs=64, M=3, r=2, group=16)
-    model = ECA(in_chs=64, ksize=3)
+    model = ECA(in_chs=64)
     y = model(inputData)
     print(y.shape)
